@@ -12,7 +12,7 @@
 
 - 後端 repo：`hexschool-store-backend` (https://github.com/yiyng1001-cell/hexschool-store-backend)，本機相對路徑 `../../../hexschool-store-backend/Draft-AGENTS.md`。
 - API 契約唯一來源：後端 `openapi.yaml` (部署後於 `/api-docs` 提供 Swagger UI)；不得自行猜測欄位，詳見 constitution `C` 區。
-- 後端 constitution：後端 repo 根目錄 `constitution.md`；兩邊衝突時先修後端契約，再改前端。
+- 後端 constitution：後端 repo 的 `specs/constitution.md`；兩邊衝突時先修後端契約，再改前端。
 
 ## 技術限制 (硬性)
 
