@@ -6,12 +6,12 @@
 
 - 不可違反的規則 (架構、測試政策、禁用模式) 定義於 `specs/constitution.md`，**開發前必讀**。
 - 每份 spec 進入 plan / 實作前，必須通過 constitution 的 Constitution Gate 檢查。
-- 本檔與 constitution 衝突時，以 `specs/constitution.md` 為準 (例如 CSS 框架鎖定 Tailwind CSS、狀態管理使用 Pinia + TypeScript)。
+- 本檔與 constitution 衝突時，以 `specs/constitution.md` 為準。
 
 ## 技術限制 (硬性)
 
 - 使用 **Vite** 建立專案，**Vue 3 + Composition API** (`<script setup>`)。不使用 Options API。
-- 搭配任一 CSS 框架 (Tailwind CSS 或 Bootstrap 5，擇一並全站一致)。
+- 使用 **Tailwind CSS**，全站唯一 CSS 框架，不混用 Bootstrap 等其他框架。
 - 元件需合理拆分；使用正確的 **HTML5 語意標籤** (`header` / `nav` / `main` / `section` / `article` / `footer` / `button` 等，避免滿版 `div`)。
 - **禁止假資料、禁止 JSON Server、禁止寫死的商品/購物車資料。** 所有資料必須來自自己開發的後端 API。
 - API Base URL 與其他設定從環境變數讀取 (`import.meta.env.VITE_*`)，不得寫死於程式碼、不得提交 `.env` 到版本控制 (提供 `.env.example`)。
@@ -79,7 +79,7 @@
 ## 開發守則 (本專案補充)
 
 - API 呼叫集中於獨立的 service/API 層 (如 `src/api/`)，元件不直接散落 `fetch`/`axios`；統一處理 base URL、Token 注入、錯誤格式。
-- 狀態管理 (登入、購物車) 使用 Pinia 或 composables；I/O 與純運算分離。
+- 狀態管理 (登入、購物車) 使用 Pinia (TypeScript strict)；I/O 與純運算分離。
 - 外部輸入 (表單、API 回應) 在邊界驗證：表單需有前端驗證與錯誤提示 (後端仍為最終驗證)。
 - 不在 console/log/原始碼中洩漏 Token 或機密資料。
 - 路由守衛 (router guard) 處理需登入頁面；未登入導向登入頁並保留回跳路徑。
