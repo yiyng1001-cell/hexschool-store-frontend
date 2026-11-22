@@ -12,5 +12,6 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.spec.ts'],
     restoreMocks: true,
+    env: { VITE_API_BASE_URL: 'http://api.test' },
   },
 })

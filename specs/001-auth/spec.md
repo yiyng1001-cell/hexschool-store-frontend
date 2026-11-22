@@ -123,7 +123,7 @@
 - `src/api/apiError.ts`：具型別的錯誤類別與錯誤碼。
 - `src/stores/authStore.ts`：`useAuthStore`（狀態機、`restoreSession`、`login`、`register`、`logout`）。
 - `src/lib/validateAuthForm.ts`、`src/lib/sanitizeRedirectPath.ts`：純函式。
-- `src/lib/accessTokenStorage.ts` 或 `src/composables/` 內的儲存轉接（以可注入的介面包裝 `localStorage`）。
+- `src/api/accessTokenStorage.ts`：以可注入的介面包裝 `localStorage`（屬 I/O，故放 `api/` 而非 `lib/`）。
 - `src/router/index.ts`、`src/router/guards.ts`：`requiresAuth` 與 `guestOnly` guard。
 - `src/views/login/LoginView.vue`、`src/views/register/RegisterView.vue`。
 - `src/components/auth/AuthFormField.vue`、`src/components/layout/AppNavbar.vue`。
