@@ -1,6 +1,6 @@
 # 002 — Products：商品瀏覽、搜尋與詳情
 
-狀態：Draft（契約部分 blocked，待後端 `openapi.yaml` 補上 products 與 categories）
+狀態：Draft（契約已於後端 `openapi.yaml` 定義；尚未對真實後端整合驗證）
 對應後端：`hexschool-store-backend` 的 `specs/002-products/spec.md` 與 `openapi.yaml`。
 依賴：`001-auth`（`httpClient`、錯誤正規化、導覽列）。
 
@@ -12,11 +12,11 @@
 
 | 端點 | 用途 | 契約狀態 |
 | --- | --- | --- |
-| `GET /api/products` | 商品列表 | **blocked**：spec 已定義，`openapi.yaml` 尚未收錄 |
-| `GET /api/products/:id` | 單一商品 | **blocked**：同上 |
-| `GET /api/categories` | 分類清單 | **blocked**：同上 |
+| `GET /api/products` | 商品列表 | 契約已定義（`openapi.yaml`），實作待確認 |
+| `GET /api/products/:id` | 單一商品 | 契約已定義（`openapi.yaml`），實作待確認 |
+| `GET /api/categories` | 分類清單 | 契約已定義（`openapi.yaml`），實作待確認 |
 
-`blocked` 解除條件：後端 `openapi.yaml` 收錄上述端點與 `Product`、`Category`、`ProductListMeta`、`NotFound`、`ErrorCode.NOT_FOUND`，之後依 C-2 產生型別並對照本 spec，必要時依 C-8 開 issue。
+`blocked` 已解除：後端 `openapi.yaml` 已收錄上述端點與 `Product`、`Category`、`ProductListMeta`、`NotFound`、`ErrorCode.NOT_FOUND`，與本 spec 逐項對照後無出入，型別依 C-2 產生。
 
 契約重點（以後端 spec 為準，待 `openapi.yaml` 確認）：
 - 列表回應：`data: { items: Product[], meta: { page, limit, total, totalPages } }`。
@@ -122,10 +122,10 @@
 - `src/api/types.ts`：重新產生，含 `Product`、`Category`、列表回應與 `NOT_FOUND`。
 - `src/api/productApi.ts`：`listProducts`、`getProduct`；`src/api/categoryApi.ts`：`listCategories`。支援傳入 `AbortSignal`。
 - `src/api/apiError.ts`：新增 `NOT_FOUND` 錯誤碼。
-- `src/stores/productCatalogStore.ts`：`useProductCatalogStore`（分類清單，只載入一次）。
+- `src/stores/productCatalogStore.ts`：`useProductCatalogStore`（分類清單只載入一次、無狀態的列表與詳情查詢、記住最後一次列表條件供詳情頁返回）。因 composable 不得直接 import `api/`，查詢經由此 store。
 - `src/composables/useProductList.ts`：依路由查詢參數取得列表、狀態機、取消過期請求。
-- `src/composables/useProductDetail.ts`。
-- `src/lib/parseProductListQuery.ts`、`src/lib/buildProductListRequest.ts`、`src/lib/formatPrice.ts`、`src/lib/buildPaginationItems.ts`：純函式。
+- `src/composables/useProductDetail.ts`、`src/composables/useFeaturedProducts.ts`、`src/composables/useDebouncedCallback.ts`。
+- `src/lib/productListQuery.ts`（`parseProductListQuery`、`buildProductListRequest`、`toRouteQuery`）、`src/lib/formatPrice.ts`、`src/lib/buildPaginationItems.ts`、`src/lib/catalogFailure.ts`：純函式與失敗型別。
 - `src/router/index.ts`：`/`、`/products`、`/products/:id`。
 - `src/views/home/HomeView.vue`、`src/views/productList/ProductListView.vue`、`src/views/productDetail/ProductDetailView.vue`。
 - `src/components/product/ProductCard.vue`、`ProductGrid.vue`、`ProductCardSkeleton.vue`、`ProductFilterBar.vue`、`ProductSearchInput.vue`。
