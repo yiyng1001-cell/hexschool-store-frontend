@@ -1,6 +1,6 @@
 # 001 — Auth：註冊、登入與登入狀態
 
-狀態：Draft
+狀態：Done
 對應後端：`hexschool-store-backend` 的 `specs/001-auth/spec.md` 與 `openapi.yaml`（Auth 區）。
 
 ## 目的
@@ -99,21 +99,21 @@
 
 ## 驗收條件
 
-- [ ] 註冊成功後已登入，導覽列顯示使用者名稱，並導向回跳路徑或首頁。
-- [ ] 登入成功行為同上；登入失敗（帳密錯誤）停留在登入頁並顯示錯誤，不被導向。
-- [ ] 重複 email 註冊，email 欄位顯示明確錯誤。
-- [ ] 後端回 `VALIDATION_ERROR` 時，錯誤顯示在對應欄位。
-- [ ] 重新整理頁面後仍為登入狀態；token 被竄改或過期時重新整理後為未登入。
-- [ ] 重新整理時 `/me` 遇到網路錯誤或 5xx：token 保留，顯示「無法確認登入狀態」與重試按鈕，不被導向登入頁；重試成功後恢復已登入。
-- [ ] 登出後 token 被清除，導覽列回到未登入，重新整理仍為未登入。
-- [ ] 未登入造訪受保護路由，導向 `/login?redirect=<原路徑>`，登入後回到原路徑。
-- [ ] 已登入造訪 `/login`、`/register` 導向首頁。
-- [ ] 任一受保護請求收到 401 `UNAUTHORIZED`，清除登入狀態並導向登入頁。
-- [ ] `redirect` 為外部網址（如 `https://evil.com`、`//evil.com`）時被忽略。
-- [ ] 請求 body 不含 `role` 等未定義欄位。
-- [ ] 送出期間按鈕停用，無法重複送出。
-- [ ] Token 不出現在 console 輸出。
-- [ ] 手機與桌機版面皆無跑版。
+- [x] 註冊成功後已登入，導覽列顯示使用者名稱，並導向回跳路徑或首頁。
+- [x] 登入成功行為同上；登入失敗（帳密錯誤）停留在登入頁並顯示錯誤，不被導向。
+- [x] 重複 email 註冊，email 欄位顯示明確錯誤。
+- [x] 後端回 `VALIDATION_ERROR` 時，錯誤顯示在對應欄位。
+- [x] 重新整理頁面後仍為登入狀態；token 被竄改或過期時重新整理後為未登入。
+- [x] 重新整理時 `/me` 遇到網路錯誤或 5xx：token 保留，顯示「無法確認登入狀態」與重試按鈕，不被導向登入頁；重試成功後恢復已登入。
+- [x] 登出後 token 被清除，導覽列回到未登入，重新整理仍為未登入。
+- [x] 未登入造訪受保護路由，導向 `/login?redirect=<原路徑>`，登入後回到原路徑。
+- [x] 已登入造訪 `/login`、`/register` 導向首頁。
+- [x] 任一受保護請求收到 401 `UNAUTHORIZED`，清除登入狀態並導向登入頁。
+- [x] `redirect` 為外部網址（如 `https://evil.com`、`//evil.com`）時被忽略。
+- [x] 請求 body 不含 `role` 等未定義欄位。
+- [x] 送出期間按鈕停用，無法重複送出。
+- [x] Token 不出現在 console 輸出。
+- [x] 手機與桌機版面皆無跑版。
 
 ## 預計新增或修改的檔案
 
@@ -146,13 +146,21 @@
 
 ## Constitution Check
 
-- [ ] **A 架構**：API 呼叫只在 `src/api/`（A-4）；store 呼叫 api，元件經 store（A-2、A-3）；驗證與 redirect 檢查為 `lib/` 純函式（A-5）；設定來自 `VITE_API_BASE_URL`（A-6）；guard 保護需登入頁（A-7）。
-- [ ] **C 契約**：三個端點皆在 `openapi.yaml`；型別由其產生（C-1～C-3）；錯誤碼正規化，並區分 `INVALID_CREDENTIALS` 與 `UNAUTHORIZED`（C-4、C-5）；本 spec 無列表請求（C-6 不適用）；已列出後端依賴（C-7）。
-- [ ] **S 安全**：只存 Token（S-1）；不 log Token（S-2）；角色只作 UI 顯示（S-3）；不送 `role` 等欄位（S-4）；不使用 `v-html`（S-5）；表單驗證並提示（S-6）；錯誤訊息不洩漏內部資訊（S-7）。
-- [ ] **U 體驗**：資料來自後端（U-1）；登入狀態重新整理後維持並可登出（U-3）；送出中停用（U-6）；RWD（U-7）；語意標籤（U-8）；hover／focus（U-9）。商品列表與購物車相關條款（U-2、U-4、U-5）不適用本 spec。
-- [ ] **T 測試**：`lib/`、`stores/`、`api/` 錯誤正規化與表單、guard 元件測試皆已列出（T-1～T-4）。
-- [ ] **X 禁用**：無 Options API、假資料、元件內 `fetch`、`v-html`、敏感資料存入 storage、空 `catch`、`any`、就地修改、未處理 rejection。
+- [x] **A 架構**：API 呼叫只在 `src/api/`（A-4）；store 呼叫 api，元件經 store（A-2、A-3）；驗證與 redirect 檢查為 `lib/` 純函式（A-5）；設定來自 `VITE_API_BASE_URL`（A-6）；guard 保護需登入頁（A-7）。
+- [x] **C 契約**：三個端點皆在 `openapi.yaml`；型別由其產生（C-1～C-3）；錯誤碼正規化，並區分 `INVALID_CREDENTIALS` 與 `UNAUTHORIZED`（C-4、C-5）；本 spec 無列表請求（C-6 不適用）；已列出後端依賴（C-7）。
+- [x] **S 安全**：只存 Token（S-1）；不 log Token（S-2）；角色只作 UI 顯示（S-3）；不送 `role` 等欄位（S-4）；不使用 `v-html`（S-5）；表單驗證並提示（S-6）；錯誤訊息不洩漏內部資訊（S-7）。
+- [x] **U 體驗**：資料來自後端（U-1）；登入狀態重新整理後維持並可登出（U-3）；送出中停用（U-6）；RWD（U-7）；語意標籤（U-8）；hover／focus（U-9）。商品列表與購物車相關條款（U-2、U-4、U-5）不適用本 spec。
+- [x] **T 測試**：`lib/`、`stores/`、`api/` 錯誤正規化與表單、guard 元件測試皆已列出（T-1～T-4）。
+- [x] **X 禁用**：無 Options API、假資料、元件內 `fetch`、`v-html`、敏感資料存入 storage、空 `catch`、`any`、就地修改、未處理 rejection。
 - 例外與理由：無。
+
+## 驗證紀錄
+
+- **自動化測試**：`lib/`、`api/`、`stores/`、路由守衛與頁面元件測試皆通過（見 `*.spec.ts`）。
+- **對真實後端**（本機 `hexschool-store-backend` main，Playwright）：註冊、登入、重新整理維持登入、登出、密碼錯誤停留、`redirect` 回跳、已登入造訪 `/login` 導向首頁、無效 token 被清除、受保護請求 401 導向登入並可回跳、`/me` 無法連線時保留 token 並提供重試（以攔截請求模擬）。
+- **版面**：手機（375px）、平板（768px）、桌機（1024px、1280px）皆無橫向溢出；鍵盤 Tab 走訪每個元素皆有 outline 或 ring。
+- **規則稽核**：分層依賴方向、禁用模式（`v-html`、`any`、`@ts-ignore`、元件內 `fetch`、儲存 Token 以外的敏感資料、`console.log`、空 `catch`）皆以指令檢查，無違反；所有 `.vue` 均少於 200 行。
+- **已知限制**：未在真實的雲端部署環境驗證；多分頁同步未實作（見取捨）。
 
 ## 已知取捨與待決事項
 
