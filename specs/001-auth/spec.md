@@ -160,7 +160,8 @@
 - **對真實後端**（本機 `hexschool-store-backend` main，Playwright）：註冊、登入、重新整理維持登入、登出、密碼錯誤停留、`redirect` 回跳、已登入造訪 `/login` 導向首頁、無效 token 被清除、受保護請求 401 導向登入並可回跳、`/me` 無法連線時保留 token 並提供重試（以攔截請求模擬）。
 - **版面**：手機（375px）、平板（768px）、桌機（1024px、1280px）皆無橫向溢出；鍵盤 Tab 走訪每個元素皆有 outline 或 ring。
 - **規則稽核**：分層依賴方向、禁用模式（`v-html`、`any`、`@ts-ignore`、元件內 `fetch`、儲存 Token 以外的敏感資料、`console.log`、空 `catch`）皆以指令檢查，無違反；所有 `.vue` 均少於 200 行。
-- **已知限制**：未在真實的雲端部署環境驗證；多分頁同步未實作（見取捨）。
+- **雲端部署**（2026-11-22，https://hexschool-store-web.onrender.com 對 https://hexschool-store-backend.onrender.com，Playwright）：首頁、商品列表與分頁、分類篩選、商品詳情深層網址重新整理不 404、未登入進 `/cart` 導向登入並回跳、示範會員登入、加入購物車、重新整理後登入與徽章維持、移除、登出清除 token；CORS 預檢（含 `PUT`、`Authorization`）通過，無 console 錯誤。
+- **已知限制**：多分頁同步未實作（見取捨）。
 
 ## 已知取捨與待決事項
 
