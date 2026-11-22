@@ -155,6 +155,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 查看購物車
+         * @description 回傳目前登入者的購物車，項目依加入時間排序。
+         *
+         *     - 購物車中的商品若已被管理員刪除，項目仍會列出，但 `available` 為 `false`，
+         *       且**不計入** `totalQuantity` 與 `totalPrice`；使用者可自行移除。
+         *     - `itemCount` 包含不可購買的項目。
+         *     - 價格一律使用商品目前的價格，不做快照。
+         */
+        get: operations["getCart"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cart/items/{productId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * 設定商品數量（沒有則加入）
+         * @description 把該商品的數量**設成**指定值；購物車裡沒有它就新增。這不是「累加」：
+         *     重複送出相同請求，結果相同（冪等）。
+         *
+         *     前端的「加入購物車」＝目前數量 + 1。每次成功後請以回應的 `cart` 覆蓋本地狀態。
+         *
+         *     - `quantity` 為 1～99 的整數；0、負數、小數、超過 99 回 400。要移除請用 `DELETE`。
+         *     - 購物車最多 50 種商品；新增第 51 種回 400，已存在的項目仍可修改數量。
+         *     - 商品不存在、已刪除或 id 格式不符回 404。
+         *     - 請求 body 不可含 `userId`、`price` 等欄位，身分一律取自 token。
+         */
+        put: operations["setCartItemQuantity"];
+        post?: never;
+        /**
+         * 移除購物車項目
+         * @description 移除該商品，回傳移除後的完整購物車。已不可購買的項目也可以移除。
+         *     項目不在購物車中（含重複移除）回 404。
+         */
+        delete: operations["removeCartItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -288,6 +348,42 @@ export interface components {
             data: {
                 items: components["schemas"]["Category"][];
             };
+        };
+        CartItemProduct: {
+            id: string;
+            name: string;
+            /** @description 商品目前的價格（新台幣元），不做快照。 */
+            price: number;
+            /** Format: uri */
+            imageUrl: string;
+            category: components["schemas"]["Category"];
+        };
+        CartItem: {
+            product: components["schemas"]["CartItemProduct"];
+            quantity: number;
+            /** @description 商品目前價格 × `quantity`。不可購買的項目也會回傳，但不計入購物車總計。 */
+            subtotal: number;
+            /** @description 商品未被刪除為 `true`；`false` 時不可調整數量，只能移除。 */
+            available: boolean;
+        };
+        Cart: {
+            items: components["schemas"]["CartItem"][];
+            /** @description 項目數，**包含**不可購買的項目。 */
+            itemCount: number;
+            /** @description 數量總和，只計 `available` 為 `true` 的項目。 */
+            totalQuantity: number;
+            /** @description 價格總和，只計 `available` 為 `true` 的項目。 */
+            totalPrice: number;
+        };
+        CartResponse: {
+            /** @enum {boolean} */
+            success: true;
+            data: {
+                cart: components["schemas"]["Cart"];
+            };
+        };
+        SetCartItemRequest: {
+            quantity: number;
         };
         /**
          * @description - `VALIDATION_ERROR`（400）：欄位缺漏、格式錯誤或含未定義欄位
@@ -718,6 +814,85 @@ export interface operations {
                     "application/json": components["schemas"]["CategoryListResponse"];
                 };
             };
+        };
+    };
+    getCart: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 成功 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    setCartItemQuantity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "quantity": 2
+                 *     }
+                 */
+                "application/json": components["schemas"]["SetCartItemRequest"];
+            };
+        };
+        responses: {
+            /** @description 設定成功，回傳完整購物車 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartResponse"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    removeCartItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                productId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 移除成功，回傳完整購物車 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
         };
     };
 }

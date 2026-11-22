@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
+import AddToCartButton from '@/components/cart/AddToCartButton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import ProductImage from '@/components/ui/ProductImage.vue'
@@ -78,6 +79,9 @@ const backToListLocation = computed(() => ({ name: 'products', query: catalogSto
         <p class="whitespace-pre-line text-slate-700">
           {{ state.product.description }}
         </p>
+        <div class="max-w-xs">
+          <AddToCartButton :product-id="state.product.id" />
+        </div>
       </div>
     </article>
   </main>

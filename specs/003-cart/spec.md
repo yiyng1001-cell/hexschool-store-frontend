@@ -1,6 +1,6 @@
 # 003 — Cart：購物車
 
-狀態：Draft（契約部分 blocked，待後端 `openapi.yaml` 補上 cart）
+狀態：Draft（契約已於後端 `openapi.yaml` 定義並已對真實後端驗證；尚待 Constitution Check 勾選）
 對應後端：`hexschool-store-backend` 的 `specs/003-cart/spec.md` 與 `openapi.yaml`。
 依賴：`001-auth`（登入狀態、`requiresAuth` 路由、401 處理、`restoreFailed` 畫面）、`002-products`（商品卡片、商品詳情、`ProductImage`、`formatPrice`）。
 
@@ -12,11 +12,11 @@
 
 | 端點 | 用途 | 契約狀態 |
 | --- | --- | --- |
-| `GET /api/cart` | 取得購物車 | **blocked**：spec 已定義，`openapi.yaml` 尚未收錄 |
-| `PUT /api/cart/items/{productId}` | 設定數量（沒有則新增） | **blocked**：同上 |
-| `DELETE /api/cart/items/{productId}` | 移除項目 | **blocked**：同上 |
+| `GET /api/cart` | 取得購物車 | 契約已定義（`openapi.yaml`），已對真實後端驗證 |
+| `PUT /api/cart/items/{productId}` | 設定數量（沒有則新增） | 契約已定義（`openapi.yaml`），已對真實後端驗證 |
+| `DELETE /api/cart/items/{productId}` | 移除項目 | 契約已定義（`openapi.yaml`），已對真實後端驗證 |
 
-`blocked` 解除條件：後端 `openapi.yaml` 收錄上述端點與 `Cart`、`CartItem` schema，之後依 C-2 產生型別並對照本 spec，必要時依 C-8 開 issue。
+`blocked` 已解除：後端 `openapi.yaml` 已收錄上述端點與 `Cart`、`CartItem` schema，與本 spec 逐項對照後無出入，型別依 C-2 產生。購物車已滿的錯誤為 400 `VALIDATION_ERROR` 且 `details` 的 `field` 為 `productId`，前端以此判斷。
 
 契約重點（以後端 spec 為準，待 `openapi.yaml` 確認）：
 - 三支 API 皆需 access token；身分取自 token，網址與 body 不含 `userId`。
@@ -119,13 +119,14 @@
 - `src/api/cartApi.ts`：`getCart`、`setCartItemQuantity`、`removeCartItem`（皆需 token；`handleUnauthorized` 使用預設，由 `001-auth` 的全域處理接手）。
 - `src/lib/cartRules.ts`：`MAX_ITEM_QUANTITY`、`calculateQuantityAfterAdd`、`canIncreaseQuantity`、`canDecreaseQuantity`（純函式）。
 - `src/lib/cartFailure.ts`：`CartFailure` 與 `describeCartFailure`（訊息對照）。
-- `src/stores/cartStore.ts`：`useCartStore`（狀態機、載入、加入、設定數量、移除、變更佇列、`pendingProductIds`、`reset`）。
+- `src/stores/cartStore.ts`：`useCartStore`（狀態機、載入、加入、設定數量、移除、變更佇列、`pendingProductIds`、`reset`）。排入佇列的工作會記下排入時的 session，執行時 session 已改變（登出、換帳號）就略過，避免舊工作以新身分送出。
+- `src/stores/toCartFailure.ts`：API 錯誤對應為 `CartFailure`。
 - `src/stores/toastStore.ts`：`useToastStore`（顯示與移除，有上限）。
 - `src/composables/useCartSync.ts`：依 `authStore.status` 載入或清空購物車。
-- `src/composables/useAddToCart.ts`：封裝「未登入導向登入、已登入加入、回饋」流程，供卡片與詳情頁共用。
+- `src/composables/useCartActions.ts`：封裝「未登入導向登入、加入、調整數量、移除與回饋」流程，供卡片、詳情頁與購物車頁共用。
 - `src/components/cart/AddToCartButton.vue`、`CartItemRow.vue`、`CartSummary.vue`、`CartQuantityStepper.vue`。
 - `src/components/ui/ToastHost.vue`。
-- `src/components/product/ProductCard.vue`、`src/views/productDetail/ProductDetailView.vue`：加入按鈕（卡片的按鈕放在連結之外，避免巢狀互動元素）。
+- `src/components/product/ProductCard.vue`、`src/views/productDetail/ProductDetailView.vue`：加入按鈕；`src/api/httpClient.ts`：新增 `PUT`（卡片的按鈕放在連結之外，避免巢狀互動元素）。
 - `src/components/layout/AppNavbar.vue`：購物車連結與數量徽章。
 - `src/views/cart/CartView.vue`。
 - `src/router/index.ts`：`/cart`，`meta.requiresAuth`。
@@ -145,7 +146,7 @@
 - `toastStore`：新增、移除、超過上限時移除最舊的。
 
 元件：
-- `AddToCartButton`／`useAddToCart`：未登入導向登入且不呼叫 API；已登入加入並顯示 toast；99 時停用；進行中停用。
+- `AddToCartButton`／`useCartActions`：未登入導向登入且不呼叫 API；已登入加入並顯示 toast；99 時停用；進行中停用。
 - `CartView`：載入中、空、錯誤重試、有資料、不可購買項目、調整與移除後畫面等於後端回應。
 - `AppNavbar`：徽章數量、0 時隱藏、登出後消失。
 - `useCartSync`：登入後載入、登出後清空、換帳號重新載入。
