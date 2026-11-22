@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { cartApi } from '@/api/cartApi'
-import type { Cart } from '@/api/cartApi'
+import type { Cart, CartItem } from '@/api/cartApi'
 import { shouldReloadAfter } from '@/lib/cartFailure'
 import type { CartFailure, CartResult } from '@/lib/cartFailure'
 import { calculateQuantityAfterAdd } from '@/lib/cartRules'
@@ -16,7 +16,7 @@ export type CartState =
   | { readonly status: 'ready'; readonly cart: Cart }
   | { readonly status: 'error'; readonly previous: Cart | null }
 
-export type { Cart }
+export type { Cart, CartItem }
 
 export const useCartStore = defineStore('cart', () => {
   const state = ref<CartState>({ status: 'idle' })

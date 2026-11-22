@@ -1,1 +1,9 @@
 @import 'tailwindcss';
+
+/* Keyboard focus is visible on every interactive element; components that style focus themselves override this (utilities win over base). */
+@layer base {
+  :where(a, button, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--color-indigo-500);
+    outline-offset: 2px;
+  }
+}

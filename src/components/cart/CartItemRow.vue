@@ -3,7 +3,7 @@ import { RouterLink } from 'vue-router'
 
 import ProductImage from '@/components/ui/ProductImage.vue'
 import { formatPrice } from '@/lib/formatPrice'
-import type { CartItem } from '@/api/cartApi'
+import type { CartItem } from '@/stores/cartStore'
 
 import CartQuantityStepper from './CartQuantityStepper.vue'
 
