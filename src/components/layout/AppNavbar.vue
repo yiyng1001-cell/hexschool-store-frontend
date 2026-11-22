@@ -54,6 +54,12 @@ async function handleRetry() {
         class="w-full flex-col items-start gap-2 md:flex md:w-auto md:flex-row md:items-center md:gap-4"
         :class="isMenuOpen ? 'flex' : 'hidden'"
       >
+        <li>
+          <RouterLink
+            :to="{ name: 'products' }"
+            :class="linkClass"
+          >商品</RouterLink>
+        </li>
         <li v-if="authStore.status === 'anonymous'">
           <RouterLink
             :to="{ name: 'login' }"
