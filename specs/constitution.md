@@ -31,9 +31,17 @@
 - **C-2** `src/api/` 的請求與回應型別 MUST 由 `openapi.yaml` 產生（如 `openapi-typescript`）或逐欄對照；不得手寫與契約不一致的型別。
 - **C-3** 契約變更先於實作：後端未在 `openapi.yaml` 定義的端點，前端 spec 標為 blocked，不得先以假資料實作。
 - **C-4** 回應採後端統一格式；`api/` 層 MUST 將錯誤碼正規化為具型別錯誤，讓 UI 能區分邊界情況（重複加入、商品不存在、數量不合理、越權）。
-- **C-5** 狀態碼處理固定：401 清除登入狀態並導向登入；403 顯示權限不足；404 顯示資源不存在；網路或 5xx 顯示可重試的錯誤。
+- **C-5** 狀態碼與錯誤碼處理固定：
+  - 401 `UNAUTHORIZED`（token 缺少、無效或過期）：清除登入狀態並導向登入頁，帶回跳路徑。
+  - 401 `INVALID_CREDENTIALS`（登入帳密錯誤）：只在表單顯示錯誤，MUST NOT 清除狀態或導向；全域 401 處理 MUST NOT 套用在 login 與 register 請求。
+  - 403 顯示權限不足；404 顯示資源不存在；網路或 5xx 顯示可重試的錯誤。
 - **C-6** 列表請求 MUST 傳分頁參數且 `limit` 不超過後端上限；分頁、分類、搜尋條件由後端處理，不在前端過濾整份資料。
 - **C-7** 每份 spec 的「後端依賴」MUST 列出用到的端點與後端狀態（已部署／僅本機／未實作）。
+- **C-8** 後端契約（`openapi.yaml`）變更 MUST 在前端 repo 開 GitHub issue 記錄，再進行前端調整：
+  - 標題遵守 Conventional Commits 風格，如 `fix(contract): <變更摘要>`，並加 `contract` 標籤。
+  - 內容 MUST 含：後端變更的連結（PR 或 commit）、影響的端點、變更類型（新增／欄位或錯誤碼變更／棄用／移除）、受影響的前端 spec 編號、是否為破壞性變更。
+  - 受影響的前端 spec MUST 在處理該 issue 的 PR 中更新並重新做 Constitution Check，PR 以 `Closes #<issue>` 連結。
+  - 新增式變更（A-10）也要記錄，但可在同一個 issue 中批次處理；破壞性變更 MUST 單獨一個 issue。
 
 ## S. 安全（Security）
 
@@ -97,7 +105,7 @@
 ```md
 ## Constitution Check
 - [ ] A 架構：分層與依賴方向符合 A-1～A-9
-- [ ] C 契約：端點皆存在於後端 openapi.yaml，型別對齊，錯誤與狀態碼處理符合 C-1～C-7
+- [ ] C 契約：端點皆存在於後端 openapi.yaml，型別對齊，錯誤與狀態碼處理符合 C-1～C-8
 - [ ] S 安全：Token、角色、輸入渲染處理符合 S-1～S-7
 - [ ] U 體驗：狀態 UI、RWD、語意標籤、購物車同步符合 U-1～U-9
 - [ ] T 測試：已列出 lib／store／元件測試案例，含邊界情況 T-1～T-7
@@ -110,4 +118,4 @@
 - 修改本文件需獨立 commit（`docs(constitution): ...`），說明修改原因與影響的規則編號。
 - 已通過的 spec 若受修訂影響，需在同一個 PR 重新做 Constitution Check。
 - 規則編號不重用；刪除規則時保留編號並標記 `(removed)`。
-- 後端 constitution 或 `openapi.yaml` 的契約相關規則變動時，需檢視本文件 `C` 區是否同步修訂。
+- 後端 constitution 或 `openapi.yaml` 的契約相關規則變動時，需檢視本文件 `C` 區是否同步修訂，並依 C-8 開 issue 記錄。
