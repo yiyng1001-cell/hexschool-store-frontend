@@ -37,10 +37,15 @@
 
 ### 狀態機（auth store）
 
-`status`：`unknown`（啟動中，尚未還原）｜`authenticated`｜`anonymous`。
+`status`：`unknown`（啟動中，尚未還原）｜`authenticated`｜`anonymous`｜`restoreFailed`（有 token 但因網路錯誤或 5xx 無法確認，可重試）。
 
-- 啟動時：無 token → `anonymous`；有 token → 呼叫 `/me`，成功 `authenticated`，失敗 `anonymous` 並清除 token。
+- 啟動時：無 token → `anonymous`；有 token → 呼叫 `/me`：
+  - 成功 → `authenticated`。
+  - 401 `UNAUTHORIZED` → `anonymous` 並清除 token。
+  - 網路錯誤或 5xx → `restoreFailed`，**保留 token**，不視為登出。
+- `restoreFailed` 時提供「重試」動作（`retryRestoreSession`）：再次呼叫 `/me`，結果依上述規則轉換；重試進行中顯示進行中並停用重試按鈕。
 - `unknown` 期間 router guard 等待還原完成，避免已登入者被誤導向登入頁。
+- `restoreFailed` 時，需登入路由不導向登入頁，改顯示全頁的「無法確認登入狀態」錯誤與重試按鈕；不需登入的頁面照常顯示，導覽列顯示重試入口。
 - 以判別聯合型別表示（已登入時才有 `user`），避免無效組合（constitution 型別與 X-7）。
 
 ### Token 保存
@@ -58,7 +63,7 @@
 | 欄位驗證失敗 | 400 `VALIDATION_ERROR` + `details` | 依 `details[].field` 在對應欄位顯示 `message` |
 | 受保護請求 token 失效 | 401 `UNAUTHORIZED` | 清除 token 與使用者、狀態改 `anonymous`、導向登入頁並帶 `redirect` |
 | `/me` 還原失敗（401） | 401 `UNAUTHORIZED` | 靜默轉為 `anonymous`，不彈錯誤 |
-| 網路錯誤或 5xx | — | 表單顯示可重試的錯誤；還原時的網路錯誤見「待決事項」 |
+| 網路錯誤或 5xx | — | 表單顯示可重試的錯誤；啟動還原時見「`restoreFailed`」，保留 token 並提供重試 |
 
 重要區分（C-5 的細化）：**登入端點的 401 是 `INVALID_CREDENTIALS`，不是登入過期**，全域 401 處理只針對 `UNAUTHORIZED`，並且不套用在 `login` 與 `register` 請求。
 
@@ -78,7 +83,7 @@
   - 兩頁之間互有連結；登入頁保留 `redirect` 參數到註冊頁。
   - RWD：手機單欄全寬，桌機置中的固定最大寬度卡片（U-7）。
   - 密碼欄位使用 `type="password"` 並設定正確的 `autocomplete`。
-- **導覽列**：依 `status` 顯示；`unknown` 時顯示骨架或隱藏登入區，避免閃爍。手機版收進選單。
+- **導覽列**：依 `status` 顯示；`unknown` 時顯示骨架或隱藏登入區，避免閃爍；`restoreFailed` 時顯示「重試」入口。手機版收進選單。
 - 互動元件具備 hover 與 focus 樣式（U-9）。
 
 ### 回跳路徑安全
@@ -99,6 +104,7 @@
 - [ ] 重複 email 註冊，email 欄位顯示明確錯誤。
 - [ ] 後端回 `VALIDATION_ERROR` 時，錯誤顯示在對應欄位。
 - [ ] 重新整理頁面後仍為登入狀態；token 被竄改或過期時重新整理後為未登入。
+- [ ] 重新整理時 `/me` 遇到網路錯誤或 5xx：token 保留，顯示「無法確認登入狀態」與重試按鈕，不被導向登入頁；重試成功後恢復已登入。
 - [ ] 登出後 token 被清除，導覽列回到未登入，重新整理仍為未登入。
 - [ ] 未登入造訪受保護路由，導向 `/login?redirect=<原路徑>`，登入後回到原路徑。
 - [ ] 已登入造訪 `/login`、`/register` 導向首頁。
@@ -131,11 +137,11 @@
 
 單元（`api/`、`stores/`，API 以 mock 隔離）：
 - `httpClient` 錯誤正規化：400／401 `INVALID_CREDENTIALS`／401 `UNAUTHORIZED`／403／404／409／5xx／網路錯誤。
-- `authStore`：註冊與登入成功、各錯誤碼；`restoreSession` 成功、401、無 token；`logout` 清除 token；401 `UNAUTHORIZED` 觸發登出；login 的 401 `INVALID_CREDENTIALS` 不觸發登出。
+- `authStore`：註冊與登入成功、各錯誤碼；`restoreSession` 成功、401、無 token、網路錯誤與 5xx（保留 token、進入 `restoreFailed`）；`retryRestoreSession` 成功與再次失敗；`logout` 清除 token；401 `UNAUTHORIZED` 觸發登出；login 的 401 `INVALID_CREDENTIALS` 不觸發登出。
 
 元件與路由：
 - 登入、註冊表單：欄位驗證、後端欄位錯誤對應、送出中停用、成功導向。
-- Router guard：`requiresAuth`、`guestOnly`、`unknown` 期間等待還原、`redirect` 回跳。
+- Router guard：`requiresAuth`、`guestOnly`、`unknown` 期間等待還原、`restoreFailed` 時顯示重試而非導向登入、`redirect` 回跳。
 - 導覽列：未登入、已登入、登出。
 
 ## Constitution Check
@@ -150,7 +156,7 @@
 
 ## 已知取捨與待決事項
 
-- **啟動時 `/me` 遇到網路錯誤或 5xx**：選項為視為未登入並清除 token，或保留 token 並顯示可重試的狀態。前者簡單但會因短暫斷線登出使用者；建議保留 token、保持 `unknown`／顯示重試，待決。
+- **啟動時 `/me` 遇到網路錯誤或 5xx**（已決定）：保留 token、進入 `restoreFailed` 並提供重試，避免短暫斷線就把使用者登出；代價是多一個狀態與一個錯誤畫面。
 - **Token 存於 `localStorage`**：XSS 時可被讀取，後端設計只發 access token 且無法撤銷；以 S-5（不渲染未淨化 HTML）降低風險，接受此取捨。
 - **登出不通知後端**：已發出的 token 到期前仍有效，此為後端設計取捨。
 - **多分頁同步**：一個分頁登出，其他分頁不會即時更新，下次請求遇到 401 才處理；本期不實作 `storage` 事件同步。
