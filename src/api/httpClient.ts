@@ -1,7 +1,7 @@
 import { ApiHttpError, ApiNetworkError, isAbortError } from './apiError'
 import type { ApiErrorCode, ApiFieldError, BackendErrorCode } from './apiError'
 
-export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE'
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export interface RequestOptions {
   readonly body?: unknown
