@@ -7,6 +7,13 @@ import type { AuthUser } from '@/api/authApi'
 import { mountWithApp } from '@/testing/mountWithApp'
 import App from '@/App.vue'
 
+vi.mock('@/api/cartApi', () => ({
+  cartApi: {
+    getCart: vi.fn().mockResolvedValue({ items: [], itemCount: 0, totalQuantity: 0, totalPrice: 0 }),
+    setCartItemQuantity: vi.fn(),
+    removeCartItem: vi.fn(),
+  },
+}))
 vi.mock('@/api/authApi', () => ({
   authApi: { registerUser: vi.fn(), loginUser: vi.fn(), getCurrentUser: vi.fn() },
 }))

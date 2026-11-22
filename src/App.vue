@@ -3,10 +3,13 @@ import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
 import AppNavbar from '@/components/layout/AppNavbar.vue'
+import ToastHost from '@/components/ui/ToastHost.vue'
 import SessionRestoreFailed from '@/components/layout/SessionRestoreFailed.vue'
+import { useCartSync } from '@/composables/useCartSync'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
+useCartSync()
 const route = useRoute()
 
 const mustShowRestoreFailure = computed(
@@ -19,5 +22,6 @@ const mustShowRestoreFailure = computed(
     <AppNavbar />
     <SessionRestoreFailed v-if="mustShowRestoreFailure" />
     <RouterView v-else />
+    <ToastHost />
   </div>
 </template>

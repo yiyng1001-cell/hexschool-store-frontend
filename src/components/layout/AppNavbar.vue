@@ -2,9 +2,11 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
+import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 const router = useRouter()
 const isMenuOpen = ref(false)
 const isRetrying = ref(false)
@@ -59,6 +61,19 @@ async function handleRetry() {
             :to="{ name: 'products' }"
             :class="linkClass"
           >商品</RouterLink>
+        </li>
+        <li>
+          <RouterLink
+            :to="{ name: 'cart' }"
+            :class="linkClass"
+          >
+            購物車
+            <span
+              v-if="authStore.isAuthenticated && cartStore.totalQuantity > 0"
+              class="ml-1 inline-block min-w-5 rounded-full bg-indigo-600 px-1.5 text-center text-xs font-medium text-white"
+              :aria-label="`購物車內有 ${cartStore.totalQuantity} 件商品`"
+            >{{ cartStore.totalQuantity }}</span>
+          </RouterLink>
         </li>
         <li v-if="authStore.status === 'anonymous'">
           <RouterLink
