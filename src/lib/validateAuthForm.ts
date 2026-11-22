@@ -12,7 +12,7 @@ export interface RegisterFormValues extends LoginFormValues {
 const EMAIL_MAX_LENGTH = 254
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PASSWORD_MIN_LENGTH = 8
-const PASSWORD_MAX_LENGTH = 72
+const PASSWORD_MAX_BYTES = 72
 const NAME_MAX_LENGTH = 50
 
 function validateEmail(rawEmail: string): string | undefined {
@@ -22,9 +22,15 @@ function validateEmail(rawEmail: string): string | undefined {
   return undefined
 }
 
+/** The backend limits passwords by UTF-8 bytes (bcrypt input limit), so multi-byte characters count 3 each. */
+function countUtf8Bytes(text: string): number {
+  return new TextEncoder().encode(text).length
+}
+
 function validateNewPassword(password: string): string | undefined {
-  if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
-    return `密碼需為 ${PASSWORD_MIN_LENGTH}～${PASSWORD_MAX_LENGTH} 字元`
+  if (password.length < PASSWORD_MIN_LENGTH) return `密碼至少 ${PASSWORD_MIN_LENGTH} 字元`
+  if (countUtf8Bytes(password) > PASSWORD_MAX_BYTES) {
+    return `密碼最多 ${PASSWORD_MAX_BYTES} bytes（中文等多位元組字元每字佔 3 bytes）`
   }
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return '密碼需同時包含英文與數字'
   return undefined

@@ -56,7 +56,7 @@ function handleSubmit() {
       <AuthFormField
         id="register-password"
         v-model="form.password"
-        label="密碼（8～72 字元，需含英文與數字）"
+        label="密碼（至少 8 字元、最多 72 bytes，需含英文與數字）"
         type="password"
         autocomplete="new-password"
         :error="fieldErrors.password"

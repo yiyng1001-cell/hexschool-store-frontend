@@ -27,13 +27,19 @@ describe('validateRegisterForm', () => {
     ['letters only', 'abcdefgh'],
     ['digits only', '12345678'],
     ['too long', `a1${'x'.repeat(71)}`],
+    ['under 72 characters but over 72 bytes', `a1${'密'.repeat(24)}`],
   ])('rejects a password that is %s', (_label, password) => {
     expect(validateRegisterForm({ ...validRegister, password }).password).toBeDefined()
   })
 
-  it('accepts password length boundaries 8 and 72', () => {
+  it('accepts password boundaries of 8 characters and 72 bytes', () => {
     expect(validateRegisterForm({ ...validRegister, password: 'abcdefg1' }).password).toBeUndefined()
     expect(validateRegisterForm({ ...validRegister, password: `a1${'x'.repeat(70)}` }).password).toBeUndefined()
+  })
+
+  it('counts multi-byte characters as 3 bytes each', () => {
+    expect(validateRegisterForm({ ...validRegister, password: `a1${'密'.repeat(23)}` }).password).toBeUndefined()
+    expect(validateRegisterForm({ ...validRegister, password: `a1${'密'.repeat(24)}` }).password).toContain('bytes')
   })
 
   it.each(['', '   ', 'x'.repeat(51)])('rejects name %j', (name) => {

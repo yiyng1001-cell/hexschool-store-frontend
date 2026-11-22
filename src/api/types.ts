@@ -184,7 +184,7 @@ export interface components {
         RegisterRequest: {
             /** Format: email */
             email: string;
-            /** @description 8～72 字元，需含英文與數字。 */
+            /** @description 至少 8 字元、最多 72 bytes（UTF-8），需含英文字母與數字。多位元組字元（如中文）每字佔 3 bytes。 */
             password: string;
             name: string;
         };
