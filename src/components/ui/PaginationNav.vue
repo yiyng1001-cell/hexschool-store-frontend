@@ -7,8 +7,11 @@ const props = defineProps<{ page: number; totalPages: number }>()
 const emit = defineEmits<{ change: [page: number] }>()
 
 const items = computed(() => buildPaginationItems(props.page, props.totalPages))
-const buttonClass =
-  'min-w-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-50'
+const baseClass =
+  'min-w-10 rounded-md border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-50'
+const idleClass = `${baseClass} border-slate-300 bg-white hover:bg-slate-100`
+// Must not share a background utility with idleClass: two competing bg-* classes make the winner depend on CSS order.
+const currentClass = `${baseClass} border-indigo-600 bg-indigo-600 text-white`
 </script>
 
 <template>
@@ -19,7 +22,7 @@ const buttonClass =
   >
     <button
       type="button"
-      :class="buttonClass"
+      :class="idleClass"
       :disabled="page <= 1"
       @click="emit('change', page - 1)"
     >
@@ -37,7 +40,7 @@ const buttonClass =
       <button
         v-else
         type="button"
-        :class="[buttonClass, item.page === page ? 'border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-600' : '']"
+        :class="item.page === page ? currentClass : idleClass"
         :aria-current="item.page === page ? 'page' : undefined"
         :aria-label="`第 ${item.page} 頁`"
         @click="emit('change', item.page)"
@@ -47,7 +50,7 @@ const buttonClass =
     </template>
     <button
       type="button"
-      :class="buttonClass"
+      :class="idleClass"
       :disabled="page >= totalPages"
       @click="emit('change', page + 1)"
     >

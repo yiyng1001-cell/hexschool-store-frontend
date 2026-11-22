@@ -32,7 +32,7 @@ async function handleRetry() {
   <header class="border-b border-slate-200 bg-white">
     <nav
       aria-label="主要導覽"
-      class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3"
+      class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3"
     >
       <RouterLink
         :to="{ name: 'home' }"
