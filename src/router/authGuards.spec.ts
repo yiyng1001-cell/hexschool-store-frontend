@@ -32,11 +32,21 @@ beforeEach(() => {
 })
 
 describe('authNavigationGuard', () => {
-  it('waits for the session restore before deciding', async () => {
+  it('waits for the session restore before deciding on protected routes', async () => {
     const store = useAuthStore()
     const ensure = vi.spyOn(store, 'ensureSessionRestored')
-    await authNavigationGuard(routeTo({}))
+    await authNavigationGuard(routeTo({ requiresAuth: true }))
     expect(ensure).toHaveBeenCalledOnce()
+  })
+
+  it('lets public pages through without waiting for a slow session restore', async () => {
+    accessTokenStorage.write('token-1')
+    vi.mocked(authApi.getCurrentUser).mockReturnValue(new Promise(() => undefined))
+
+    const result = await authNavigationGuard(routeTo({}, '/products'))
+
+    expect(result).toBe(true)
+    expect(useAuthStore().status).toBe('unknown')
   })
 
   it('sends anonymous users away from requiresAuth routes with a redirect', async () => {

@@ -5,6 +5,7 @@ import { RouterView, useRoute } from 'vue-router'
 import AppNavbar from '@/components/layout/AppNavbar.vue'
 import ToastHost from '@/components/ui/ToastHost.vue'
 import SessionRestoreFailed from '@/components/layout/SessionRestoreFailed.vue'
+import SlowConnectionNotice from '@/components/layout/SlowConnectionNotice.vue'
 import { useCartSync } from '@/composables/useCartSync'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -20,6 +21,7 @@ const mustShowRestoreFailure = computed(
 <template>
   <div class="flex min-h-screen flex-col bg-slate-50 text-slate-900">
     <AppNavbar />
+    <SlowConnectionNotice />
     <SessionRestoreFailed v-if="mustShowRestoreFailure" />
     <RouterView v-else />
     <ToastHost />

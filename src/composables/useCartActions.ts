@@ -31,6 +31,8 @@ export function useCartActions() {
   }
 
   async function addToCart(productId: string): Promise<void> {
+    // Public pages render before the stored session is verified, so a very early click must wait for it.
+    await authStore.ensureSessionRestored()
     if (authStore.status === 'anonymous') {
       toastStore.show('info', '請先登入')
       await router.push({ name: 'login', query: { redirect: route.fullPath } })

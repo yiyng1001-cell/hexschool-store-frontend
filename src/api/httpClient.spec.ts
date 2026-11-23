@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { ApiHttpError, ApiNetworkError } from './apiError'
 import { createHttpClient } from './httpClient'
@@ -107,5 +107,88 @@ describe('createHttpClient', () => {
 
     await expect(client.request('GET', '/me', { handleUnauthorized: false })).rejects.toBeInstanceOf(ApiHttpError)
     expect(onUnauthorized).not.toHaveBeenCalled()
+  })
+
+  describe('deadline and slow requests', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    function hangingFetch(): typeof fetch {
+      return ((_url: string, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))
+        })) as typeof fetch
+    }
+
+    it('gives up after the timeout and reports a network failure', async () => {
+      vi.useFakeTimers()
+      const client = createHttpClient({
+        baseUrl: 'http://api.test',
+        fetchImplementation: hangingFetch(),
+        readAccessToken: () => null,
+        onUnauthorized: vi.fn(),
+        timeoutMilliseconds: 1_000,
+      })
+
+      const outcome = client.request('GET', '/slow').catch((error: unknown) => error)
+      await vi.advanceTimersByTimeAsync(1_000)
+
+      expect(await outcome).toBeInstanceOf(ApiNetworkError)
+    })
+
+    it('still rethrows a caller abort as an abort, not a network failure', async () => {
+      const controller = new AbortController()
+      const client = createHttpClient({
+        baseUrl: 'http://api.test',
+        fetchImplementation: hangingFetch(),
+        readAccessToken: () => null,
+        onUnauthorized: vi.fn(),
+      })
+
+      const outcome = client.request('GET', '/x', { signal: controller.signal }).catch((error: unknown) => error)
+      controller.abort()
+
+      expect(await outcome).toMatchObject({ name: 'AbortError' })
+    })
+
+    it('reports slow requests once and clears the report when none are left', async () => {
+      vi.useFakeTimers()
+      const onSlowRequestsChange = vi.fn()
+      let finish: (response: Response) => void = () => undefined
+      const client = createHttpClient({
+        baseUrl: 'http://api.test',
+        fetchImplementation: (() => new Promise<Response>((resolve) => (finish = resolve))) as typeof fetch,
+        readAccessToken: () => null,
+        onUnauthorized: vi.fn(),
+        slowAfterMilliseconds: 500,
+        onSlowRequestsChange,
+      })
+
+      const pending = client.request('GET', '/x')
+      await vi.advanceTimersByTimeAsync(499)
+      expect(onSlowRequestsChange).not.toHaveBeenCalled()
+      await vi.advanceTimersByTimeAsync(1)
+      expect(onSlowRequestsChange).toHaveBeenCalledExactlyOnceWith(true)
+
+      finish(jsonResponse(200, { success: true, data: {} }))
+      await pending
+      expect(onSlowRequestsChange).toHaveBeenLastCalledWith(false)
+    })
+
+    it('never reports a request that finishes quickly', async () => {
+      const onSlowRequestsChange = vi.fn()
+      const client = createHttpClient({
+        baseUrl: 'http://api.test',
+        fetchImplementation: vi.fn().mockResolvedValue(jsonResponse(200, { success: true, data: {} })),
+        readAccessToken: () => null,
+        onUnauthorized: vi.fn(),
+        onSlowRequestsChange,
+      })
+
+      await client.request('GET', '/x')
+
+      expect(onSlowRequestsChange).not.toHaveBeenCalled()
+    })
   })
 })
