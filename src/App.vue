@@ -7,10 +7,12 @@ import ToastHost from '@/components/ui/ToastHost.vue'
 import SessionRestoreFailed from '@/components/layout/SessionRestoreFailed.vue'
 import SlowConnectionNotice from '@/components/layout/SlowConnectionNotice.vue'
 import { useCartSync } from '@/composables/useCartSync'
+import { useLoginRedirectAfterFailedRestore } from '@/composables/useLoginRedirectAfterFailedRestore'
 import { useAuthStore } from '@/stores/authStore'
 
 const authStore = useAuthStore()
 useCartSync()
+useLoginRedirectAfterFailedRestore()
 const route = useRoute()
 
 const mustShowRestoreFailure = computed(

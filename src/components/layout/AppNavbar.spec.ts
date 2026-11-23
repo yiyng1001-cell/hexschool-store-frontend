@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from '@/App.vue'
 import { accessTokenStorage } from '@/api/accessTokenStorage'
-import { ApiNetworkError } from '@/api/apiError'
+import { ApiHttpError, ApiNetworkError } from '@/api/apiError'
 import { authApi } from '@/api/authApi'
 import type { AuthUser } from '@/api/authApi'
 import { mountWithApp } from '@/testing/mountWithApp'
@@ -82,6 +82,23 @@ describe('AppNavbar', () => {
 
     expect(wrapper.get('nav').text()).toContain('小明')
   })
+  it('sends the visitor to login when a retry finds the stored token rejected on a protected page', async () => {
+    accessTokenStorage.write('stale-token')
+    vi.mocked(authApi.getCurrentUser).mockRejectedValue(new ApiNetworkError(new Error('offline')))
+    const { wrapper, router } = await mountWithApp(App, '/cart')
+    expect(router.currentRoute.value.name).toBe('cart')
+
+    vi.mocked(authApi.getCurrentUser).mockRejectedValue(
+      new ApiHttpError({ status: 401, code: 'UNAUTHORIZED', message: 'expired' }),
+    )
+    const retry = wrapper.findAll('button').find((button) => button.text().includes('重試'))
+    await retry?.trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.name).toBe('login')
+    expect(router.currentRoute.value.query.redirect).toBe('/cart')
+  })
+
   describe('mobile menu', () => {
     const menuButton = (wrapper: Awaited<ReturnType<typeof mountWithApp>>['wrapper']) =>
       wrapper.get('button[aria-controls="primary-menu"]')
