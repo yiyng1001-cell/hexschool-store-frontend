@@ -115,6 +115,28 @@ describe('ProductListView', () => {
     expect(lastRequest()).toMatchObject({ page: 1, category: 'c2' })
   })
 
+  it('does not move focus to the heading when a filter resets the page', async () => {
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus')
+    vi.mocked(productApi.listProducts).mockResolvedValue(page([makeProduct('p1', 'a')], 30, 3, 3))
+    const { wrapper } = await mountWithApp(App, '/products?page=3')
+
+    await wrapper.get('#product-category').setValue('c2')
+    await flushPromises()
+
+    expect(focusSpy).not.toHaveBeenCalled()
+  })
+
+  it('moves focus to the heading after a pagination click', async () => {
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus')
+    vi.mocked(productApi.listProducts).mockResolvedValue(page([makeProduct('p1', 'a')], 30, 1, 3))
+    const { wrapper } = await mountWithApp(App, '/products')
+
+    await wrapper.get('nav[aria-label="分頁"] button[aria-label="第 2 頁"]').trigger('click')
+    await flushPromises()
+
+    expect(focusSpy).toHaveBeenCalled()
+  })
+
   it('searches on submit and omits q when cleared', async () => {
     vi.mocked(productApi.listProducts).mockResolvedValue(page([makeProduct('p1', 'a')], 1))
     const { wrapper } = await mountWithApp(App, '/products')
