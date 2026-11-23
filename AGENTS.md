@@ -1,6 +1,6 @@
 # AGENTS.md — 前端 (Frontend)
 
-本 repo 為「前後端整合主題電商平台」(2026 企業專題班單人專題) 的**前端**。需求來源：`specs/assignment.md`。後端為獨立 repo，本 repo 不含後端程式碼。
+本 repo 為「前後端整合主題電商平台」(2026 企業專題班單人專題) 的**前端**。作業需求已整理於本檔 (原始作業說明文件不納入 repo)。後端為獨立 repo，本 repo 不含後端程式碼。
 
 ## Constitution (最高準則)
 
