@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import ProductGrid from '@/components/product/ProductGrid.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import { useFeaturedProducts } from '@/composables/useFeaturedProducts'
 import { describeCatalogFailure } from '@/lib/catalogFailure'
@@ -71,6 +72,10 @@ onMounted(() => void catalogStore.loadCategories())
         v-if="state.status === 'error'"
         :message="describeCatalogFailure(state.failure)"
         @retry="retry"
+      />
+      <EmptyState
+        v-else-if="state.status === 'success' && state.products.length === 0"
+        title="目前沒有商品"
       />
       <ProductGrid
         v-else

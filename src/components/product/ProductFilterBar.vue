@@ -42,7 +42,7 @@ function readSort(event: Event): ProductSort | null {
 
     <button
       type="button"
-      class="self-start rounded-md border border-slate-300 bg-white px-3 py-1 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 md:hidden"
+      class="min-h-10 self-start rounded-md border border-slate-300 bg-white px-4 py-2 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 md:hidden"
       :aria-expanded="isOpenOnMobile"
       aria-controls="product-filters"
       @click="isOpenOnMobile = !isOpenOnMobile"
@@ -64,10 +64,12 @@ function readSort(event: Event): ProductSort | null {
           id="product-category"
           :class="selectClass"
           :value="query.category ?? ''"
+          :disabled="categoriesState === 'loading'"
+          :aria-busy="categoriesState === 'loading' ? 'true' : undefined"
           @change="emit('change', { category: ($event.target as HTMLSelectElement).value || null })"
         >
           <option value="">
-            全部分類
+            {{ categoriesState === 'loading' ? '分類載入中…' : '全部分類' }}
           </option>
           <option
             v-for="category in categories"
@@ -80,7 +82,7 @@ function readSort(event: Event): ProductSort | null {
         <button
           v-if="categoriesState === 'error'"
           type="button"
-          class="self-start text-sm text-red-600 underline"
+          class="self-start py-1 text-sm text-red-600 underline"
           @click="emit('retryCategories')"
         >
           分類載入失敗，重試
