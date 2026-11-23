@@ -6,6 +6,7 @@ import AddToCartButton from '@/components/cart/AddToCartButton.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import ProductImage from '@/components/ui/ProductImage.vue'
+import { useDocumentTitle } from '@/composables/useDocumentTitle'
 import { useProductDetail } from '@/composables/useProductDetail'
 import { describeCatalogFailure } from '@/lib/catalogFailure'
 import { formatPrice } from '@/lib/formatPrice'
@@ -15,6 +16,7 @@ const route = useRoute()
 const catalogStore = useProductCatalogStore()
 const productId = computed(() => String(route.params.id))
 const { state, retry } = useProductDetail(productId)
+useDocumentTitle(computed(() => (state.value.status === 'success' ? state.value.product.name : '商品詳情')))
 // Keep the list filters the visitor came from, if any.
 const backToListLocation = computed(() => ({ name: 'products', query: catalogStore.lastListRouteQuery }))
 </script>

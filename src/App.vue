@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 
+import AppFooter from '@/components/layout/AppFooter.vue'
 import AppNavbar from '@/components/layout/AppNavbar.vue'
 import ToastHost from '@/components/ui/ToastHost.vue'
 import SessionRestoreFailed from '@/components/layout/SessionRestoreFailed.vue'
@@ -26,6 +27,7 @@ const mustShowRestoreFailure = computed(
     <SlowConnectionNotice />
     <SessionRestoreFailed v-if="mustShowRestoreFailure" />
     <RouterView v-else />
+    <AppFooter />
     <ToastHost />
   </div>
 </template>
