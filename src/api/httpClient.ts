@@ -62,7 +62,13 @@ function toFieldErrors(value: unknown): ApiFieldError[] {
 }
 
 async function readJsonBody(response: Response): Promise<unknown> {
-  const text = await response.text()
+  let text: string
+  try {
+    text = await response.text()
+  } catch (error) {
+    // The connection dropped while the body was streaming: the outcome of the request is unknown.
+    throw new ApiNetworkError(error)
+  }
   if (text === '') return null
   try {
     return JSON.parse(text)
@@ -91,11 +97,12 @@ function buildHeaders(options: RequestOptions, token: string | null): Headers {
   return headers
 }
 
-function unwrapSuccessData<TResponseData>(body: unknown): TResponseData {
+function unwrapSuccessData<TResponseData>(status: number, body: unknown): TResponseData {
   if (isRecord(body) && body.success === true && 'data' in body) {
     return body.data as TResponseData
   }
-  return undefined as TResponseData
+  // A 2xx without the contract's envelope (for example an HTML page from a proxy) must not pass as an empty success.
+  throw new ApiHttpError({ status, code: 'UNKNOWN_ERROR', message: 'Unexpected response body' })
 }
 
 export function createHttpClient(dependencies: HttpClientDependencies): HttpClient {
@@ -168,7 +175,7 @@ export function createHttpClient(dependencies: HttpClientDependencies): HttpClie
       const received = await send(method, path, options, signal)
       return { response: received, body: await readJsonBody(received) }
     })
-    if (response.ok) return unwrapSuccessData<TResponseData>(body)
+    if (response.ok) return unwrapSuccessData<TResponseData>(response.status, body)
 
     const error = normalizeErrorResponse(response.status, body)
     if (error.code === 'UNAUTHORIZED' && options.handleUnauthorized !== false) {

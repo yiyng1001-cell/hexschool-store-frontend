@@ -171,6 +171,36 @@ describe('addProduct', () => {
   })
 })
 
+describe('lost response after a committed write', () => {
+  it('reloads the cart so the quantity the backend stored is shown', async () => {
+    vi.mocked(cartApi.getCart)
+      .mockResolvedValueOnce(cartOf(item('p1', 1)))
+      .mockResolvedValueOnce(cartOf(item('p1', 2)))
+    vi.mocked(cartApi.setCartItemQuantity).mockRejectedValue(new ApiNetworkError(new Error('connection reset')))
+    const store = useCartStore()
+    await store.loadCart()
+
+    const result = await store.addProduct('p1')
+
+    expect(result).toEqual({ ok: false, failure: { kind: 'network' } })
+    expect(store.cart?.items[0]?.quantity).toBe(2)
+  })
+
+  it('keeps the previous cart when the reload also fails', async () => {
+    const before = cartOf(item('p1', 1))
+    vi.mocked(cartApi.getCart)
+      .mockResolvedValueOnce(before)
+      .mockRejectedValueOnce(new ApiNetworkError(new Error('offline')))
+    vi.mocked(cartApi.setCartItemQuantity).mockRejectedValue(new ApiNetworkError(new Error('offline')))
+    const store = useCartStore()
+    await store.loadCart()
+
+    await store.addProduct('p1')
+
+    expect(store.cart).toEqual(before)
+  })
+})
+
 describe('setQuantity and removeItem', () => {
   it('updates from the backend response, never from local arithmetic', async () => {
     vi.mocked(cartApi.getCart).mockResolvedValue(cartOf(item('p1', 1)))

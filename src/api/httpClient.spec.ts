@@ -72,6 +72,23 @@ describe('createHttpClient', () => {
     expect(warn).toHaveBeenCalled()
   })
 
+  it('rejects a 2xx response that lacks the success envelope', async () => {
+    const { client } = buildClient(vi.fn().mockResolvedValue(new Response('<html>', { status: 200 })))
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const error = await client.request('GET', '/x').catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiHttpError)
+    expect(error).toMatchObject({ status: 200, code: 'UNKNOWN_ERROR' })
+  })
+
+  it('reports a response body that fails mid-stream as a network failure', async () => {
+    const brokenResponse = { ok: true, status: 200, text: () => Promise.reject(new TypeError('terminated')) }
+    const { client } = buildClient(vi.fn().mockResolvedValue(brokenResponse))
+
+    await expect(client.request('GET', '/x')).rejects.toBeInstanceOf(ApiNetworkError)
+  })
+
   it('wraps fetch failures as ApiNetworkError', async () => {
     const { client } = buildClient(vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
 
