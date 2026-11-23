@@ -28,10 +28,20 @@ const meta = computed(() => {
   return current.status === 'loading' ? (current.previous?.meta ?? null) : null
 })
 
+// Only a pagination click moves focus to the heading. A filter or search also resets the page, and stealing focus then would interrupt typing.
+let shouldFocusHeadingAfterPageChange = false
+
+function changePage(page: number): void {
+  shouldFocusHeadingAfterPageChange = true
+  goToPage(page)
+}
+
 watch(
   () => query.value.page,
   async () => {
     window.scrollTo({ top: 0 })
+    if (!shouldFocusHeadingAfterPageChange) return
+    shouldFocusHeadingAfterPageChange = false
     await nextTick()
     headingElement.value?.focus()
   },
@@ -90,7 +100,8 @@ watch(
           v-if="meta"
           :page="meta.page"
           :total-pages="meta.totalPages"
-          @change="goToPage"
+          :disabled="state.status === 'loading'"
+          @change="changePage"
         />
       </template>
     </section>

@@ -16,12 +16,17 @@ export type CartResult<TValue> =
   | { readonly ok: true; readonly value: TValue }
   | { readonly ok: false; readonly failure: CartFailure }
 
-/** Failures after which the local cart may disagree with the backend and must be reloaded. */
+/**
+ * Failures after which the local cart may disagree with the backend and must be reloaded.
+ * `network` and `unexpected` are included because the write may have been committed before the response was lost.
+ */
 export function shouldReloadAfter(failure: CartFailure): boolean {
   return (
     failure.kind === 'productUnavailable' ||
     failure.kind === 'itemNotInCart' ||
-    failure.kind === 'invalidQuantity'
+    failure.kind === 'invalidQuantity' ||
+    failure.kind === 'network' ||
+    failure.kind === 'unexpected'
   )
 }
 

@@ -52,4 +52,15 @@ describe('HomeView', () => {
     await flushPromises()
     expect(wrapper.get('[role="alert"]').text()).toContain('無法連線')
   })
+
+  it('shows an empty state instead of endless skeletons when the catalog is empty', async () => {
+    vi.mocked(productApi.listProducts).mockResolvedValue({
+      items: [],
+      meta: { page: 1, limit: 8, total: 0, totalPages: 0 },
+    })
+    const { wrapper } = await mountWithApp(App, '/')
+
+    expect(wrapper.text()).toContain('目前沒有商品')
+    expect(wrapper.find('[aria-hidden="true"].animate-pulse').exists()).toBe(false)
+  })
 })

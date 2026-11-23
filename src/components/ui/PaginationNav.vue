@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 import { buildPaginationItems } from '@/lib/buildPaginationItems'
 
-const props = defineProps<{ page: number; totalPages: number }>()
+const props = defineProps<{ page: number; totalPages: number; disabled?: boolean }>()
 const emit = defineEmits<{ change: [page: number] }>()
 
 const items = computed(() => buildPaginationItems(props.page, props.totalPages))
@@ -23,7 +23,7 @@ const currentClass = `${baseClass} border-indigo-600 bg-indigo-600 text-white`
     <button
       type="button"
       :class="idleClass"
-      :disabled="page <= 1"
+      :disabled="disabled || page <= 1"
       @click="emit('change', page - 1)"
     >
       上一頁
@@ -42,6 +42,7 @@ const currentClass = `${baseClass} border-indigo-600 bg-indigo-600 text-white`
         type="button"
         :class="item.page === page ? currentClass : idleClass"
         :aria-current="item.page === page ? 'page' : undefined"
+        :disabled="disabled"
         :aria-label="`第 ${item.page} 頁`"
         @click="emit('change', item.page)"
       >
@@ -51,7 +52,7 @@ const currentClass = `${baseClass} border-indigo-600 bg-indigo-600 text-white`
     <button
       type="button"
       :class="idleClass"
-      :disabled="page >= totalPages"
+      :disabled="disabled || page >= totalPages"
       @click="emit('change', page + 1)"
     >
       下一頁

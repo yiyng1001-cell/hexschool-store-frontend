@@ -24,7 +24,16 @@ export interface HttpClientDependencies {
   readonly fetchImplementation: typeof fetch
   readonly readAccessToken: () => string | null
   readonly onUnauthorized: () => void
+  /** Requests still pending after this long are reported as slow (a sleeping free-tier backend). Default 3 s. */
+  readonly slowAfterMilliseconds?: number
+  /** Requests are abandoned after this long and reported as network failures. Default 45 s. */
+  readonly timeoutMilliseconds?: number
+  /** Called with true when the first slow request appears and with false when none is left. */
+  readonly onSlowRequestsChange?: (hasSlowRequests: boolean) => void
 }
+
+const DEFAULT_SLOW_AFTER_MILLISECONDS = 3_000
+const DEFAULT_TIMEOUT_MILLISECONDS = 45_000
 
 const KNOWN_ERROR_CODES: readonly BackendErrorCode[] = [
   'VALIDATION_ERROR',
@@ -53,7 +62,13 @@ function toFieldErrors(value: unknown): ApiFieldError[] {
 }
 
 async function readJsonBody(response: Response): Promise<unknown> {
-  const text = await response.text()
+  let text: string
+  try {
+    text = await response.text()
+  } catch (error) {
+    // The connection dropped while the body was streaming: the outcome of the request is unknown.
+    throw new ApiNetworkError(error)
+  }
   if (text === '') return null
   try {
     return JSON.parse(text)
@@ -82,21 +97,68 @@ function buildHeaders(options: RequestOptions, token: string | null): Headers {
   return headers
 }
 
-function unwrapSuccessData<TResponseData>(body: unknown): TResponseData {
+function unwrapSuccessData<TResponseData>(status: number, body: unknown): TResponseData {
   if (isRecord(body) && body.success === true && 'data' in body) {
     return body.data as TResponseData
   }
-  return undefined as TResponseData
+  // A 2xx without the contract's envelope (for example an HTML page from a proxy) must not pass as an empty success.
+  throw new ApiHttpError({ status, code: 'UNKNOWN_ERROR', message: 'Unexpected response body' })
 }
 
 export function createHttpClient(dependencies: HttpClientDependencies): HttpClient {
-  async function send(method: HttpMethod, path: string, options: RequestOptions) {
+  const slowAfter = dependencies.slowAfterMilliseconds ?? DEFAULT_SLOW_AFTER_MILLISECONDS
+  const timeout = dependencies.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS
+  let slowRequestCount = 0
+
+  function reportSlowRequest(): () => void {
+    let isCounted = false
+    const timer = setTimeout(() => {
+      isCounted = true
+      slowRequestCount += 1
+      if (slowRequestCount === 1) dependencies.onSlowRequestsChange?.(true)
+    }, slowAfter)
+    return () => {
+      clearTimeout(timer)
+      if (!isCounted) return
+      slowRequestCount -= 1
+      if (slowRequestCount === 0) dependencies.onSlowRequestsChange?.(false)
+    }
+  }
+
+  /** Aborts after the timeout or when the caller aborts; a timeout is reported as a network failure. */
+  async function runWithDeadline<TValue>(
+    callerSignal: AbortSignal | undefined,
+    run: (signal: AbortSignal) => Promise<TValue>,
+  ): Promise<TValue> {
+    const controller = new AbortController()
+    let hasTimedOut = false
+    const abortFromCaller = () => controller.abort()
+    if (callerSignal?.aborted) controller.abort()
+    callerSignal?.addEventListener('abort', abortFromCaller, { once: true })
+    const timer = setTimeout(() => {
+      hasTimedOut = true
+      controller.abort()
+    }, timeout)
+    const stopSlowReport = reportSlowRequest()
+    try {
+      return await run(controller.signal)
+    } catch (error) {
+      if (hasTimedOut) throw new ApiNetworkError(new Error('request timed out'))
+      throw error
+    } finally {
+      clearTimeout(timer)
+      stopSlowReport()
+      callerSignal?.removeEventListener('abort', abortFromCaller)
+    }
+  }
+
+  async function send(method: HttpMethod, path: string, options: RequestOptions, signal: AbortSignal) {
     try {
       return await dependencies.fetchImplementation(`${dependencies.baseUrl}${path}`, {
         method,
         headers: buildHeaders(options, dependencies.readAccessToken()),
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
-        signal: options.signal,
+        signal,
       })
     } catch (error) {
       if (isAbortError(error)) throw error
@@ -109,9 +171,11 @@ export function createHttpClient(dependencies: HttpClientDependencies): HttpClie
     path: string,
     options: RequestOptions = {},
   ): Promise<TResponseData> {
-    const response = await send(method, path, options)
-    const body = await readJsonBody(response)
-    if (response.ok) return unwrapSuccessData<TResponseData>(body)
+    const { response, body } = await runWithDeadline(options.signal, async (signal) => {
+      const received = await send(method, path, options, signal)
+      return { response: received, body: await readJsonBody(received) }
+    })
+    if (response.ok) return unwrapSuccessData<TResponseData>(response.status, body)
 
     const error = normalizeErrorResponse(response.status, body)
     if (error.code === 'UNAUTHORIZED' && options.handleUnauthorized !== false) {

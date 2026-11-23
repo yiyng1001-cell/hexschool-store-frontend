@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import { useCartStore } from '@/stores/cartStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -8,11 +8,24 @@ import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 const router = useRouter()
+const route = useRoute()
 const isMenuOpen = ref(false)
+const menuButton = ref<HTMLButtonElement | null>(null)
 const isRetrying = ref(false)
 
 const linkClass =
-  'rounded px-2 py-1 text-slate-700 transition hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300'
+  'inline-block rounded px-2 py-2 text-slate-700 transition hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300'
+
+// On small screens the menu overlays the page: leaving it open after a tap hides the page the visitor just opened.
+watch(() => route.fullPath, () => {
+  isMenuOpen.value = false
+})
+
+function closeMenuWithEscape() {
+  if (!isMenuOpen.value) return
+  isMenuOpen.value = false
+  menuButton.value?.focus()
+}
 
 async function handleLogout() {
   authStore.logout()
@@ -34,16 +47,18 @@ async function handleRetry() {
   <header class="border-b border-slate-200 bg-white">
     <nav
       aria-label="主要導覽"
-      class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3"
+      class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2"
+      @keydown.esc="closeMenuWithEscape"
     >
       <RouterLink
         :to="{ name: 'home' }"
-        class="text-lg font-bold text-slate-900"
+        class="inline-block py-2 text-lg font-bold text-slate-900"
       >生活選物店</RouterLink>
 
       <button
+        ref="menuButton"
         type="button"
-        class="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 md:hidden"
+        class="min-h-10 rounded border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 md:hidden"
         :aria-expanded="isMenuOpen"
         aria-controls="primary-menu"
         @click="isMenuOpen = !isMenuOpen"

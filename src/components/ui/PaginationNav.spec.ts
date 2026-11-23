@@ -32,4 +32,10 @@ describe('PaginationNav', () => {
     await wrapper.findAll('button').at(-1)?.trigger('click')
     expect(wrapper.emitted('change')).toEqual([[4], [3]])
   })
+
+  it('disables every control while disabled', () => {
+    const wrapper = mount(PaginationNav, { props: { page: 2, totalPages: 5, disabled: true } })
+
+    expect(wrapper.findAll('button').every((button) => button.attributes('disabled') !== undefined)).toBe(true)
+  })
 })

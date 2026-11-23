@@ -9,20 +9,26 @@ const TOAST_LIFETIME_MILLISECONDS = 4000
 const toastStore = useToastStore()
 const timers = new Map<number, ReturnType<typeof setTimeout>>()
 
+function startDismissTimer(toastId: number): void {
+  if (timers.has(toastId)) return
+  timers.set(
+    toastId,
+    setTimeout(() => {
+      timers.delete(toastId)
+      toastStore.dismiss(toastId)
+    }, TOAST_LIFETIME_MILLISECONDS),
+  )
+}
+
+// Hovering or focusing a toast pauses its timer, so a keyboard or pointer user is not racing it.
+function pauseDismissTimer(toastId: number): void {
+  clearTimeout(timers.get(toastId))
+  timers.delete(toastId)
+}
+
 watch(
   () => toastStore.toasts,
-  (toasts) => {
-    toasts.forEach((toast) => {
-      if (timers.has(toast.id)) return
-      timers.set(
-        toast.id,
-        setTimeout(() => {
-          timers.delete(toast.id)
-          toastStore.dismiss(toast.id)
-        }, TOAST_LIFETIME_MILLISECONDS),
-      )
-    })
-  },
+  (toasts) => toasts.forEach((toast) => startDismissTimer(toast.id)),
   { immediate: true },
 )
 
@@ -43,6 +49,10 @@ const kindClass = {
       class="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-md border px-4 py-3 text-sm shadow-lg"
       :class="kindClass[toast.kind]"
       :role="toast.kind === 'error' ? 'alert' : 'status'"
+      @mouseenter="pauseDismissTimer(toast.id)"
+      @mouseleave="startDismissTimer(toast.id)"
+      @focusin="pauseDismissTimer(toast.id)"
+      @focusout="startDismissTimer(toast.id)"
     >
       <span class="flex-1">{{ toast.message }}</span>
       <RouterLink
