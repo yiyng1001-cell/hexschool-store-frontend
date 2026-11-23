@@ -82,4 +82,28 @@ describe('AppNavbar', () => {
 
     expect(wrapper.get('nav').text()).toContain('小明')
   })
+  describe('mobile menu', () => {
+    const menuButton = (wrapper: Awaited<ReturnType<typeof mountWithApp>>['wrapper']) =>
+      wrapper.get('button[aria-controls="primary-menu"]')
+
+    it('closes after navigating to another page', async () => {
+      const { wrapper, router } = await mountWithApp(App, '/')
+      await menuButton(wrapper).trigger('click')
+      expect(menuButton(wrapper).attributes('aria-expanded')).toBe('true')
+
+      await router.push('/products')
+      await flushPromises()
+
+      expect(menuButton(wrapper).attributes('aria-expanded')).toBe('false')
+    })
+
+    it('closes with Escape and returns focus to the menu button', async () => {
+      const { wrapper } = await mountWithApp(App, '/')
+      await menuButton(wrapper).trigger('click')
+
+      await wrapper.get('nav').trigger('keydown', { key: 'Escape' })
+
+      expect(menuButton(wrapper).attributes('aria-expanded')).toBe('false')
+    })
+  })
 })
