@@ -5,6 +5,7 @@ import CartView from '@/views/cart/CartView.vue'
 import ProductDetailView from '@/views/productDetail/ProductDetailView.vue'
 import ProductListView from '@/views/productList/ProductListView.vue'
 import LoginView from '@/views/login/LoginView.vue'
+import NotFoundView from '@/views/notFound/NotFoundView.vue'
 import RegisterView from '@/views/register/RegisterView.vue'
 
 import { buildPageTitle } from '@/lib/pageTitle'
@@ -21,6 +22,7 @@ export function createAppRouter(history = createWebHistory()) {
       { path: '/cart', name: 'cart', component: CartView, meta: { requiresAuth: true, title: '購物車' } },
       { path: '/login', name: 'login', component: LoginView, meta: { guestOnly: true, title: '登入' } },
       { path: '/register', name: 'register', component: RegisterView, meta: { guestOnly: true, title: '註冊' } },
+      { path: '/:pathMatch(.*)*', name: 'notFound', component: NotFoundView, meta: { title: '找不到頁面' } },
     ],
   })
   router.beforeEach(authNavigationGuard)
