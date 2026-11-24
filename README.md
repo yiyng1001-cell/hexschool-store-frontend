@@ -2,16 +2,22 @@
 
 2026 企業專題班單人專題的前端，與 [hexschool-store-backend](https://github.com/yiyng1001-cell/hexschool-store-backend) 串接。
 
+## 專案主題
+
+「生活選物店」：販售家居、廚房、收納、文具的選物電商。功能包含首頁、商品列表（分類篩選、關鍵字搜尋、分頁）、商品詳情、會員註冊與登入、購物車（加入、調整數量、移除，皆與後端同步），版面支援手機與桌機（RWD）。
+
 ## 技術
 
 Vite、Vue 3（Composition API）、TypeScript、Tailwind CSS、Pinia、Vue Router、Vitest。
 
 ## 本機啟動
 
+需要 Node.js 20.19 以上（或 22.12 以上），且後端 API 需先啟動（見後端 repo README），或直接把 `VITE_API_BASE_URL` 指向已部署的後端。
+
 ```sh
 npm install
 cp .env.example .env   # 設定 VITE_API_BASE_URL
-npm run dev
+npm run dev            # 預設 http://localhost:5173
 ```
 
 ## 環境變數
@@ -40,8 +46,9 @@ npm run dev
 | 角色 | Email | 密碼 |
 | --- | --- | --- |
 | 一般會員 | `member@example.com` | `Member12345` |
+| 管理員 | `admin@example.com` | 為避免公開 repo 洩漏，不寫在此處，請見繳交信件 |
 
-管理員測試帳號不公開於本 repo，改於繳交的 email 中提供。前端的角色判斷只用於畫面顯示，權限以後端為準；管理員功能僅提供 API，前端沒有後台頁面。
+管理員帳號只能由後端 seed 指令建立，使用者無法自行升級（詳見後端 repo README）。前端的角色判斷只用於畫面顯示，權限以後端為準；管理員功能僅提供 API，前端沒有後台頁面。
 
 ## 部署
 
